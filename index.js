@@ -29,9 +29,47 @@ async function run() {
 
         const db = client.db("food-lovers");
         const reviewCollection = db.collection("reviews");
+        const usersCollection = db.collection("users");
 
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
+
+        // USERS API
+        app.post("/users", async (req, res) => {
+            const newUser = req.body;
+
+            const email = req.body.email;
+            const query = { email: email };
+            const existingUser = await usersCollection.findOne(query);
+            if (existingUser) {
+                res.send({message: "User already exists"})
+            } else {
+                const result = await usersCollection.insertOne(newUser);
+                res.send(result);
+            }
+        })
+
+
+        // REVIEWS APIs
+        app.post("/reviews", async (req, res) => {
+            const newReview = req.body;
+            const result = await reviewCollection.insertOne(newReview);
+            res.send(result);
+        })
+
+        app.get("/reviews", async (req, res) => {
+            const email = req.query.email;
+            const query = {};
+            if (email) {
+                query.email = email;
+            }
+
+            const cursor = reviewCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
     }
     finally {
 
