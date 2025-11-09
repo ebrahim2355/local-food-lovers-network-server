@@ -30,6 +30,7 @@ async function run() {
         const db = client.db("food-lovers");
         const reviewsCollection = db.collection("reviews");
         const usersCollection = db.collection("users");
+        const favoritesCollection = db.collection("favorites");
 
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
@@ -97,8 +98,6 @@ async function run() {
             const id = req.params.id;
             try {
                 const query = { _id: new ObjectId(id) };
-                console.log("Requested review ID:", id);
-
                 const result = await reviewsCollection.findOne(query);
 
                 if (!result) {
@@ -132,6 +131,27 @@ async function run() {
 
             const result = await reviewsCollection.updateOne(filter, updateDoc);
             res.send(result);
+        });
+
+
+        // favoritesCollection APIs
+        app.post("/favorites", async (req, res) => {
+            const { user_email, reviewId } = req.body;
+            const existing = await favoritesCollection.findOne({ user_email, review_id: reviewId });
+            if (existing) return res.send({ message: "Already is  on favorite" });
+
+            const result = await favoritesCollection.insertOne({
+                user_email,
+                review_id: reviewId,
+                addedAt: new Date(),
+            });
+            res.send(result);
+        });
+
+        app.get("/favorites/:email", async (req, res) => {
+            const email = req.params.email;
+            const favorites = await favoritesCollection.find({ user_email: email }).toArray();
+            res.send(favorites);
         });
 
     }
