@@ -70,7 +70,7 @@ async function run() {
             res.send(result);
         })
 
-        app.get("/reviews/:email", async (req, res) => {
+        app.get("/reviews/user/:email", async (req, res) => {
             const email = req.params.email;
             const query = { reviewer_email: email };
             const result = await reviewsCollection.find(query).sort({ date: -1 }).toArray();
@@ -81,6 +81,47 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await reviewsCollection.deleteOne(query);
+            res.send(result);
+        });
+
+        app.get("/reviews/:id", async (req, res) => {
+            const id = req.params.id;
+            try {
+                const query = { _id: new ObjectId(id) };
+                console.log("Requested review ID:", id);
+
+                const result = await reviewsCollection.findOne(query);
+
+                if(!result){
+                    return res.status(404).send({ message: "Review not found" });
+                }
+                res.send(result);
+            }
+            catch(error){
+                console.error(error);
+                res.status(500).send({ message: "Error fetching review" });
+            }
+            
+        });
+
+        app.put("/reviews/:id", async (req, res) => {
+            const id = req.params.id;
+            const updatedReview = req.body;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    food_name: updatedReview.food_name,
+                    food_image: updatedReview.food_image,
+                    restaurant_name: updatedReview.restaurant_name,
+                    location: updatedReview.location,
+                    rating: updatedReview.rating,
+                    review_text: updatedReview.review_text,
+                    favorites: updatedReview.favorites,
+                    date: new Date(),
+                },
+            };
+
+            const result = await reviewsCollection.updateOne(filter, updateDoc);
             res.send(result);
         });
 
