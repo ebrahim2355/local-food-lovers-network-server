@@ -59,16 +59,25 @@ async function run() {
         })
 
         app.get("/reviews", async (req, res) => {
-            const email = req.query.email;
-            const query = {};
-            if (email) {
-                query.email = email;
-            }
+            try {
+                const email = req.query.email;
+                const query = {};
+                if (email) {
+                    query.reviewer_email = email;
+                }
 
-            const cursor = reviewsCollection.find(query);
-            const result = await cursor.toArray();
-            res.send(result);
-        })
+                const result = await reviewsCollection
+                    .find(query)
+                    .sort({ date: -1 })
+                    .toArray();
+
+                res.send(result);
+            } catch (err) {
+                console.error(err);
+                res.status(500).send({ message: "Failed to fetch reviews" });
+            }
+        });
+
 
         app.get("/reviews/user/:email", async (req, res) => {
             const email = req.params.email;
@@ -92,16 +101,16 @@ async function run() {
 
                 const result = await reviewsCollection.findOne(query);
 
-                if(!result){
+                if (!result) {
                     return res.status(404).send({ message: "Review not found" });
                 }
                 res.send(result);
             }
-            catch(error){
+            catch (error) {
                 console.error(error);
                 res.status(500).send({ message: "Error fetching review" });
             }
-            
+
         });
 
         app.put("/reviews/:id", async (req, res) => {
