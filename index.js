@@ -63,6 +63,9 @@ async function run() {
             try {
                 const email = req.query.email;
                 const search = req.query.search || "";
+                const limit = parseInt(req.query.limit) || 0;
+                const sortField = req.query.sort || "date";
+
                 const query = {};
                 if (email) {
                     query.reviewer_email = email;
@@ -74,7 +77,8 @@ async function run() {
 
                 const result = await reviewsCollection
                     .find(query)
-                    .sort({ date: -1 })
+                    .sort({ [sortField]: -1 })
+                    .limit(limit)
                     .toArray();
 
                 res.send(result);
