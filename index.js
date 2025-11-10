@@ -62,9 +62,14 @@ async function run() {
         app.get("/reviews", async (req, res) => {
             try {
                 const email = req.query.email;
+                const search = req.query.search || "";
                 const query = {};
                 if (email) {
                     query.reviewer_email = email;
+                }
+
+                if(search){
+                    query.food_name = {$regex: search, $options: "i"}
                 }
 
                 const result = await reviewsCollection
