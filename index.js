@@ -63,8 +63,11 @@ async function run() {
             try {
                 const email = req.query.email;
                 const search = req.query.search || "";
-                const limit = parseInt(req.query.limit) || 0;
                 const sortField = req.query.sort || "date";
+
+                const page = parseInt(req.query.page) || 1;
+                const limit = parseInt(req.query.limit) || 6;
+                const skip = (page - 1) * limit;
 
                 const query = {};
                 if (email) {
@@ -75,13 +78,20 @@ async function run() {
                     query.food_name = {$regex: search, $options: "i"}
                 }
 
+                const total = await reviewsCollection.countDocuments(query);
+
                 const result = await reviewsCollection
                     .find(query)
                     .sort({ [sortField]: -1 })
+                    .skip((page - 1) * limit)
                     .limit(limit)
                     .toArray();
 
-                res.send(result);
+                res.send({
+                    page,
+                    totalPages: Math.ceil(total / limit),
+                    reviews: result,
+                });
             } catch (err) {
                 console.error(err);
                 res.status(500).send({ message: "Failed to fetch reviews" });
